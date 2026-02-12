@@ -3,6 +3,7 @@ import LLMUsage
 
 struct AccountRowView: View {
     @EnvironmentObject var viewModel: MenuBarViewModel
+    @Environment(\.openURL) var openURL
     let account: LLMAccount
 
     private var usageData: UsageData? { viewModel.usageByAccountID[account.id] }
@@ -29,6 +30,17 @@ struct AccountRowView: View {
                         .padding(.vertical, 2)
                         .background(.quaternary)
                         .cornerRadius(4)
+                }
+
+                if let settingURL = usageData?.settingURL {
+                    Button {
+                        openURL(settingURL)
+                    } label: {
+                        Image(systemName: "arrow.up.right.square")
+                            .foregroundColor(.secondary)
+                    }
+                    .buttonStyle(.plain)
+                    .help("Open settings")
                 }
 
                 Button {

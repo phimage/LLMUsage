@@ -56,17 +56,20 @@ public struct UsageData: Codable, Sendable {
     public let account: LLMAccount
     public let plan: PlanInfo?
     public let metrics: [UsageMetric]
+    public let settingURL: URL?
     public let fetchedAt: Date
     
     public init(
         account: LLMAccount,
         plan: PlanInfo? = nil,
         metrics: [UsageMetric],
+        settingURL: URL? = nil,
         fetchedAt: Date = Date()
     ) {
         self.account = account
         self.plan = plan
         self.metrics = metrics
+        self.settingURL = settingURL
         self.fetchedAt = fetchedAt
     }
 }

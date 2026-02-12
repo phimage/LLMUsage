@@ -5,7 +5,8 @@ public struct CodexClient: UsageClient {
     public let service = LLMService.codex
     
     private let usageURL = URL(string: "https://chatgpt.com/backend-api/wham/usage")!
-    
+    public var settingURL: URL? = nil
+
     public init() {}
     
     public func fetchUsage(account: LLMAccount) async throws -> UsageData {
@@ -108,7 +109,7 @@ public struct CodexClient: UsageClient {
         
         let plan = (json["plan_type"] as? String).map { PlanInfo(name: $0) }
         
-        return UsageData(account: account, plan: plan, metrics: metrics)
+        return UsageData(account: account, plan: plan, metrics: metrics, settingURL: settingURL)
     }
     
     private func parseHeaderPercent(_ headers: [AnyHashable: Any], key: String) -> Double? {

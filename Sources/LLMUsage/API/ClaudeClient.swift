@@ -8,7 +8,7 @@ public struct ClaudeClient: UsageClient {
     private let refreshURL = URL(string: "https://platform.claude.com/v1/oauth/token")!
     private let clientID = "9d1c250a-e61b-44d9-88ed-5944d1962f5e"
     private let scopes = "user:profile user:inference user:sessions:claude_code user:mcp_servers"
-    private let settingURL: URL = URL(string: "https://claude.ai/settings/usage")!
+    public var settingURL: URL? = URL(string: "https://claude.ai/settings/usage")
     
     
     public init() {}
@@ -86,7 +86,7 @@ public struct ClaudeClient: UsageClient {
             ))
         }
         
-        return UsageData(account: account, plan: nil, metrics: metrics)
+        return UsageData(account: account, plan: nil, metrics: metrics, settingURL: settingURL)
     }
     
     private func parseDate(_ value: Any?) -> Date? {

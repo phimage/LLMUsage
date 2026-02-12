@@ -5,7 +5,7 @@ public struct CopilotClient: UsageClient {
     public let service = LLMService.copilot
     
     private let usageURL = URL(string: "https://api.github.com/copilot_internal/user")!
-    private let settingURL: URL = URL(string: "https://github.com/settings/copilot/features")!
+    public var settingURL: URL? = URL(string: "https://github.com/settings/copilot/features")
     
     public init() {}
     
@@ -106,7 +106,7 @@ public struct CopilotClient: UsageClient {
             }
         }
         
-        return UsageData(account: account, plan: plan, metrics: metrics)
+        return UsageData(account: account, plan: plan, metrics: metrics, settingURL: settingURL)
     }
     
     private func parseDate(_ value: Any?) -> Date? {

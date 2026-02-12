@@ -4,6 +4,7 @@ import Foundation
 public protocol UsageClient: Sendable {
     var service: LLMService { get }
     func fetchUsage(account: LLMAccount) async throws -> UsageData
+    var settingURL: URL? { get }
 }
 
 /// Errors from usage API calls

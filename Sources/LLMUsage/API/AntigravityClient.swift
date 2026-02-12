@@ -5,6 +5,7 @@ public struct AntigravityClient: UsageClient {
     public let service = LLMService.antigravity
     
     private let lsService = "exa.language_server_pb.LanguageServerService"
+    public var settingURL: URL? = nil
     
     public init() {}
     
@@ -159,7 +160,7 @@ public struct AntigravityClient: UsageClient {
             }
         }
         
-        return UsageData(account: account, plan: plan, metrics: metrics)
+        return UsageData(account: account, plan: plan, metrics: metrics, settingURL: settingURL)
     }
     
     private func normalizeLabel(_ label: String) -> String {

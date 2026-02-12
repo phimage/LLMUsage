@@ -7,6 +7,7 @@ public struct CursorClient: UsageClient {
     private let baseURL = "https://api2.cursor.sh"
     private let usageURL = URL(string: "https://api2.cursor.sh/aiserver.v1.DashboardService/GetCurrentPeriodUsage")!
     private let planURL = URL(string: "https://api2.cursor.sh/aiserver.v1.DashboardService/GetPlanInfo")!
+    public var settingURL: URL? = nil
     
     public init() {}
     
@@ -98,7 +99,7 @@ public struct CursorClient: UsageClient {
             ))
         }
         
-        return UsageData(account: account, plan: plan, metrics: metrics)
+        return UsageData(account: account, plan: plan, metrics: metrics, settingURL: settingURL)
     }
     
     private func parseTimestamp(_ value: String) -> Date? {
