@@ -2,7 +2,6 @@ import Foundation
 import ArgumentParser
 import LLMUsage
 
-@main
 struct LLMUsageCLI: AsyncParsableCommand {
     static let configuration = CommandConfiguration(
         commandName: "llmusage-cli",
@@ -281,3 +280,5 @@ func shortError(_ error: Error) -> String {
 enum CLIError: Error {
     case timeout
 }
+
+LLMUsageCLI.main()

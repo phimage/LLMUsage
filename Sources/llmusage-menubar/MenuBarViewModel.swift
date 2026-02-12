@@ -106,6 +106,14 @@ final class MenuBarViewModel: ObservableObject {
         errorByAccountID.removeValue(forKey: account.id)
     }
 
+    func updateAccountLabel(_ account: LLMAccount, newLabel: String) async {
+        var updated = account
+        updated.label = newLabel
+        updated.updatedAt = Date()
+        try? await usage.saveAccount(updated)
+        accounts = await usage.getAccounts()
+    }
+
     // MARK: - Detach / Attach
 
     func detach() {

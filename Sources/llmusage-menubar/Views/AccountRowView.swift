@@ -9,6 +9,9 @@ struct AccountRowView: View {
     private var usageData: UsageData? { viewModel.usageByAccountID[account.id] }
     private var error: String? { viewModel.errorByAccountID[account.id] }
 
+    @State private var isEditingLabel = false
+    @State private var tempLabel = ""
+
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
             HStack {
@@ -77,5 +80,24 @@ struct AccountRowView: View {
         .padding(10)
         .background(.background.opacity(0.5))
         .cornerRadius(8)
+        .contextMenu {
+            Button("Edit Label") {
+                tempLabel = account.label
+                isEditingLabel = true
+            }
+            
+            Button("Remove Account", role: .destructive) {
+                Task { await viewModel.deleteAccount(account) }
+            }
+        }
+        .alert("Edit Label", isPresented: $isEditingLabel) {
+            TextField("Label", text: $tempLabel)
+            Button("Cancel", role: .cancel) { }
+            Button("Save") {
+                Task { await viewModel.updateAccountLabel(account, newLabel: tempLabel) }
+            }
+        } message: {
+            Text("Enter a new label for this account.")
+        }
     }
 }
