@@ -5,7 +5,7 @@ public struct CodexClient: UsageClient {
     public let service = LLMService.codex
     
     private let usageURL = URL(string: "https://chatgpt.com/backend-api/wham/usage")!
-    public var settingURL: URL? = nil
+    public var settingURL: URL? = URL(string: "https://chatgpt.com/codex/settings/usage")
 
     public init() {}
     
