@@ -9,13 +9,19 @@ struct AddAccountFormView: View {
             Text("Add Account").font(.headline)
 
             Picker("Service", selection: $viewModel.addService) {
-                ForEach(LLMService.allCases, id: \.self) { service in
+                ForEach(LLMService.allCases.filter { service in
+                    if service == .antigravity {
+                        return !viewModel.accounts.contains(where: { $0.service == .antigravity })
+                    }
+                    return true
+                }, id: \.self) { service in
                     Text(service.displayName).tag(service)
                 }
             }
 
-            TextField("Token / API Key", text: $viewModel.addToken)
+            TextField(viewModel.addService == .antigravity ? "Discovered automatically" : "Token / API Key", text: $viewModel.addToken)
                 .textFieldStyle(.roundedBorder)
+                .disabled(viewModel.addService == .antigravity)
 
             TextField("Label (optional)", text: $viewModel.addLabel)
                 .textFieldStyle(.roundedBorder)
@@ -25,10 +31,10 @@ struct AddAccountFormView: View {
                 Button("Cancel") {
                     viewModel.showAddForm = false
                 }
-                Button("Add") {
+                Button(viewModel.addService == .antigravity ? "Discover" : "Add") {
                     Task { await viewModel.addAccount() }
                 }
-                .disabled(viewModel.addToken.isEmpty)
+                .disabled(viewModel.addService != .antigravity && viewModel.addToken.isEmpty)
                 .keyboardShortcut(.return)
             }
         }

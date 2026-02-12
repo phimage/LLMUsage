@@ -64,28 +64,32 @@ final class MenuBarViewModel: ObservableObject {
     }
 
     // MARK: - Discovery
-
-    func discoverAndMerge() async {
+ 
+    func discoverAndMerge(service: LLMService? = nil) async {
         isDiscovering = true
         defer { isDiscovering = false }
-
-        _ = try? await usage.discoverAndImport()
+ 
+        _ = try? await usage.discoverAndImport(service: service)
         accounts = await usage.getAccounts()
         await refreshUsage()
     }
-
+ 
     // MARK: - Account Management
-
+ 
     func addAccount() async {
-        let token = TokenInfo(accessToken: addToken, source: .manual)
-        let account = LLMAccount(
-            service: addService,
-            label: addLabel.isEmpty ? "Manual" : addLabel,
-            tokens: [token],
-            isActive: true
-        )
-        try? await usage.saveAccount(account)
-        accounts = await usage.getAccounts()
+        if addService == .antigravity {
+            await discoverAndMerge(service: .antigravity)
+        } else {
+            let token = TokenInfo(accessToken: addToken, source: .manual)
+            let account = LLMAccount(
+                service: addService,
+                label: addLabel.isEmpty ? "Manual" : addLabel,
+                tokens: [token],
+                isActive: true
+            )
+            try? await usage.saveAccount(account)
+            accounts = await usage.getAccounts()
+        }
 
         addToken = ""
         addLabel = ""

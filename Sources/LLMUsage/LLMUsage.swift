@@ -122,7 +122,20 @@ public actor LLMUsage {
         guard let client = clients[account.service] else {
             throw LLMUsageError.noClientForService(account.service)
         }
-        return try await client.fetchUsage(account: account)
+        
+        do {
+            return try await client.fetchUsage(account: account)
+        } catch {
+            if account.service == .antigravity {
+                // Try once to rediscover
+                _ = try? await discoverAndImport(service: .antigravity)
+                // Get the updated account
+                if let updatedAccount = accounts.first(where: { $0.id == account.id }) {
+                    return try await client.fetchUsage(account: updatedAccount)
+                }
+            }
+            throw error
+        }
     }
     
     /// Fetch usage for all active accounts
@@ -147,6 +160,12 @@ public actor LLMUsage {
             }
             return results
         }
+    }
+    
+    // MARK: - Testing Support
+    
+    internal func registerClient(_ client: any UsageClient, for service: LLMService) {
+        clients[service] = client
     }
 }
 
