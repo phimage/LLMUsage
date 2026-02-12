@@ -3,15 +3,22 @@ import LLMUsage
 
 @main
 struct LLMUsageApp: App {
-    @StateObject private var viewModel = MenuBarViewModel()
+    @NSApplicationDelegateAdaptor(AppDelegate.self) var delegate
 
     var body: some Scene {
-        MenuBarExtra {
-            MenuBarContentView()
-                .environmentObject(viewModel)
-        } label: {
-            Label("LLM Usage", systemImage: "gauge.medium")
+        Settings {
+            EmptyView()
         }
-        .menuBarExtraStyle(.window)
+    }
+}
+
+@MainActor
+class AppDelegate: NSObject, NSApplicationDelegate {
+    private var viewModel: MenuBarViewModel!
+    private var statusBarController: StatusBarController?
+
+    func applicationDidFinishLaunching(_ notification: Notification) {
+        viewModel = MenuBarViewModel()
+        statusBarController = StatusBarController(viewModel)
     }
 }

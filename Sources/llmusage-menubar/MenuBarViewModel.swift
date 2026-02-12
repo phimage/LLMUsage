@@ -1,5 +1,6 @@
 import SwiftUI
 import LLMUsage
+import ServiceManagement
 
 @MainActor
 final class MenuBarViewModel: ObservableObject {
@@ -11,6 +12,12 @@ final class MenuBarViewModel: ObservableObject {
     @Published var showAddForm = false
     @Published var isDetached = false
     @Published var lastRefreshed: Date?
+
+    @AppStorage("launchAtLogin") var launchAtLogin: Bool = false {
+        didSet {
+            updateLaunchAtLogin()
+        }
+    }
 
     // Add-account form state
     @Published var addService: LLMService = .claude
@@ -31,6 +38,7 @@ final class MenuBarViewModel: ObservableObject {
         accounts = await usage.getAccounts()
         await refreshUsage()
         startAutoRefresh()
+        updateLaunchAtLogin()
     }
 
     // MARK: - Refresh
@@ -181,6 +189,15 @@ final class MenuBarViewModel: ObservableObject {
             Task { @MainActor [weak self] in
                 await self?.refreshUsage()
             }
+        }
+    }
+
+    private func updateLaunchAtLogin() {
+        let service = SMAppService.mainApp
+        if launchAtLogin {
+            try? service.register()
+        } else {
+            try? service.unregister()
         }
     }
 }
