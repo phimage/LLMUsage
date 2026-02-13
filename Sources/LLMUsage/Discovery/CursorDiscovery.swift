@@ -9,26 +9,26 @@ public struct CursorDiscovery: TokenDiscoverer {
     
     public init() {}
     
-    public func discover() async throws -> DiscoveryResult? {
+    public func discover() async throws -> [DiscoveryResult] {
         let path = (dbPath as NSString).expandingTildeInPath
-        guard FileManager.default.fileExists(atPath: path) else { return nil }
-        
+        guard FileManager.default.fileExists(atPath: path) else { return [] }
+
         let accessToken = try? readStateValue(path: path, key: "cursorAuth/accessToken")
         let refreshToken = try? readStateValue(path: path, key: "cursorAuth/refreshToken")
-        
-        guard let accessToken, !accessToken.isEmpty else { return nil }
-        
+
+        guard let accessToken, !accessToken.isEmpty else { return [] }
+
         // Decode JWT to get expiration
         let expiresAt = decodeJWTExpiration(accessToken)
-        
+
         let token = TokenInfo(
             accessToken: accessToken,
             refreshToken: refreshToken,
             expiresAt: expiresAt,
             source: .discovered
         )
-        
-        return DiscoveryResult(service: .cursor, tokens: [token], source: "sqlite")
+
+        return [DiscoveryResult(service: .cursor, tokens: [token], source: "sqlite")]
     }
     
     private func readStateValue(path: String, key: String) throws -> String? {

@@ -9,25 +9,25 @@ public struct CodexDiscovery: TokenDiscoverer {
     
     public init() {}
     
-    public func discover() async throws -> DiscoveryResult? {
+    public func discover() async throws -> [DiscoveryResult] {
         // Check CODEX_HOME first
         if let codexHome = ProcessInfo.processInfo.environment["CODEX_HOME"] {
             let path = (codexHome as NSString).appendingPathComponent(authFile)
             if let result = try? loadAuth(from: path) {
-                return result
+                return [result]
             }
         }
-        
+
         // Fall back to config paths
         for basePath in configPaths {
             let expanded = (basePath as NSString).expandingTildeInPath
             let path = (expanded as NSString).appendingPathComponent(authFile)
             if let result = try? loadAuth(from: path) {
-                return result
+                return [result]
             }
         }
-        
-        return nil
+
+        return []
     }
     
     private func loadAuth(from path: String) throws -> DiscoveryResult? {

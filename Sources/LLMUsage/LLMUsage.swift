@@ -65,11 +65,7 @@ public actor LLMUsage {
     public func discoverAndImport(service: LLMService? = nil) async throws -> [LLMAccount] {
         let results: [DiscoveryResult]
         if let service {
-            if let result = await discovery.discover(service: service) {
-                results = [result]
-            } else {
-                results = []
-            }
+            results = await discovery.discover(service: service)
         } else {
             results = await discovery.discoverAll()
         }
@@ -111,7 +107,7 @@ public actor LLMUsage {
     }
     
     /// Discover tokens for a specific service
-    public func discover(service: LLMService) async -> DiscoveryResult? {
+    public func discover(service: LLMService) async -> [DiscoveryResult] {
         await discovery.discover(service: service)
     }
     

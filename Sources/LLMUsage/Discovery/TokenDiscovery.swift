@@ -17,7 +17,7 @@ public struct DiscoveryResult: Sendable {
 /// Protocol for service-specific token discovery
 public protocol TokenDiscoverer: Sendable {
     var service: LLMService { get }
-    func discover() async throws -> DiscoveryResult?
+    func discover() async throws -> [DiscoveryResult]
 }
 
 /// Coordinator for running all token discoveries
@@ -43,11 +43,11 @@ public actor TokenDiscoveryCoordinator {
     
     /// Discover tokens for all registered services
     public func discoverAll() async -> [DiscoveryResult] {
-        await withTaskGroup(of: DiscoveryResult?.self) { group in
+        await withTaskGroup(of: [DiscoveryResult].self) { group in
             for discoverer in discoverers {
                 group.addTask {
                     do {
-                        return try await withThrowingTaskGroup(of: DiscoveryResult?.self) { innerGroup in
+                        return try await withThrowingTaskGroup(of: [DiscoveryResult].self) { innerGroup in
                             innerGroup.addTask {
                                 try await discoverer.discover()
                             }
@@ -60,16 +60,14 @@ public actor TokenDiscoveryCoordinator {
                             return result
                         }
                     } catch {
-                        return nil
+                        return []
                     }
                 }
             }
-            
+
             var results: [DiscoveryResult] = []
             for await result in group {
-                if let result {
-                    results.append(result)
-                }
+                results.append(contentsOf: result)
             }
             return results
         }
@@ -80,10 +78,10 @@ public actor TokenDiscoveryCoordinator {
     }
     
     /// Discover tokens for a specific service
-    public func discover(service: LLMService) async -> DiscoveryResult? {
+    public func discover(service: LLMService) async -> [DiscoveryResult] {
         guard let discoverer = discoverers.first(where: { $0.service == service }) else {
-            return nil
+            return []
         }
-        return try? await discoverer.discover()
+        return (try? await discoverer.discover()) ?? []
     }
 }

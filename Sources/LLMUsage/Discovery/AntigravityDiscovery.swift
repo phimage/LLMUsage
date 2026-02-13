@@ -6,17 +6,15 @@ public struct AntigravityDiscovery: TokenDiscoverer {
     
     public init() {}
     
-    public func discover() async throws -> DiscoveryResult? {
+    public func discover() async throws -> [DiscoveryResult] {
         // Find all language_server_macos processes
         let tokens = await findLanguageServers()
-        
-        guard !tokens.isEmpty else {
-            return nil
-        }
-        
 
-        
-        return DiscoveryResult(service: .antigravity, tokens: tokens, source: "process")
+        guard !tokens.isEmpty else {
+            return []
+        }
+
+        return [DiscoveryResult(service: .antigravity, tokens: tokens, source: "process")]
     }
     
     private struct AntigravityProcessInfo {

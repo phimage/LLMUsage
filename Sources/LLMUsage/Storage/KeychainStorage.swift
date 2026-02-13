@@ -124,15 +124,50 @@ public final class KeychainStorage: AccountStorage, @unchecked Sendable {
         if let account {
             query[kSecAttrAccount as String] = account
         }
-        
+
         var result: AnyObject?
         let status = SecItemCopyMatching(query as CFDictionary, &result)
-        
+
         guard status == errSecSuccess, let data = result as? Data else {
             return nil
         }
-        
+
         return String(data: data, encoding: .utf8)
+    }
+
+    /// Read all generic passwords matching a keychain service, returning (account, password) pairs
+    public static func readAllGenericPasswords(service: String) -> [String] {
+        let query: [String: Any] = [
+            kSecClass as String: kSecClassGenericPassword,
+            kSecAttrService as String: service,
+			kSecReturnAttributes as String: true,
+            kSecMatchLimit as String: kSecMatchLimitAll
+        ]
+
+        var result: CFTypeRef?
+        let status = SecItemCopyMatching(query as CFDictionary, &result)
+
+        guard status == errSecSuccess, let items = result as? [[String: Any]] else {
+            return []
+        }
+
+        return items.compactMap { item in
+			let dataQuery: [String: Any] = [
+				kSecClass as String: kSecClassGenericPassword,
+				kSecAttrService as String: service,
+				kSecAttrAccount as String: item[kSecAttrAccount as String] ?? "",
+				kSecReturnData as String: true,
+				kSecMatchLimit as String: kSecMatchLimitOne
+			]
+			var dataResult: CFTypeRef?
+			SecItemCopyMatching(dataQuery as CFDictionary, &dataResult)
+
+            guard let data = dataResult as? Data,
+                  let password = String(data: data, encoding: .utf8) else {
+                return nil
+            }
+            return password
+        }
     }
 }
 

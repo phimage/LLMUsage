@@ -9,14 +9,18 @@ public struct ClaudeDiscovery: TokenDiscoverer {
     
     public init() {}
     
-    public func discover() async throws -> DiscoveryResult? {
+    public func discover() async throws -> [DiscoveryResult] {
         // Try credential file first
         if let result = try? discoverFromFile() {
-            return result
+            return [result]
         }
-        
+
         // Fallback to keychain
-        return discoverFromKeychain()
+        if let result = discoverFromKeychain() {
+            return [result]
+        }
+
+        return []
     }
     
     private func discoverFromFile() throws -> DiscoveryResult? {

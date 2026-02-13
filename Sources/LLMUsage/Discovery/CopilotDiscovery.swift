@@ -8,38 +8,45 @@ public struct CopilotDiscovery: TokenDiscoverer {
     
     public init() {}
     
-    public func discover() async throws -> DiscoveryResult? {
-        guard var token = KeychainStorage.readGenericPassword(service: ghKeychainService) else {
-            return nil
-        }
-        
-        // Handle go-keyring base64 encoding
+    public func discover() async throws -> [DiscoveryResult] {
+        let entries = KeychainStorage.readAllGenericPasswords(service: ghKeychainService)
+        guard !entries.isEmpty else { return [] }
+
+        var results: [DiscoveryResult] = []
         let prefix = "go-keyring-base64:"
-        if token.hasPrefix(prefix) {
-            let encoded = String(token.dropFirst(prefix.count))
-            guard let data = Data(base64Encoded: encoded),
-                  let decoded = String(data: data, encoding: .utf8) else {
-                return nil
+
+        for entry in entries {
+            var token = entry
+
+            // Handle go-keyring base64 encoding
+            if token.hasPrefix(prefix) {
+                let encoded = String(token.dropFirst(prefix.count))
+                guard let data = Data(base64Encoded: encoded),
+                      let decoded = String(data: data, encoding: .utf8) else {
+                    continue
+                }
+                token = decoded
             }
-            token = decoded
+
+            guard !token.isEmpty else { continue }
+
+            let tokenInfo = TokenInfo(
+                accessToken: token,
+                refreshToken: nil,
+                expiresAt: nil,
+                source: .discovered
+            )
+
+            let label = await CopilotDiscovery.fetchUsername(token: token)
+
+            results.append(DiscoveryResult(service: .copilot, tokens: [tokenInfo], source: "gh-cli", label: label))
         }
-        
-        guard !token.isEmpty else { return nil }
-        
-        let tokenInfo = TokenInfo(
-            accessToken: token,
-            refreshToken: nil,
-            expiresAt: nil,
-            source: .discovered
-        )
-        
-        let label = await CopilotDiscovery.fetchUsername(token: token)
-        
-        return DiscoveryResult(service: .copilot, tokens: [tokenInfo], source: "gh-cli", label: label)
+
+        return results
     }
     
     public static func fetchUsername(token: String) async -> String? {
-        // Run fetch with 2s timeout
+        // Run fetch with 10s timeout
         do {
             return try await withThrowingTaskGroup(of: String?.self) { group in
                 group.addTask {
@@ -53,23 +60,26 @@ public struct CopilotDiscovery: TokenDiscoverer {
                         return nil
                     }
                     
-                    if let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-                       let login = json["login"] as? String {
-                        return login
+					if let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any], let value = json["login"] {
+						if let login = value as? String {
+							return login
+						}
+						return String(describing: value) // NSTaggedPointerString?
                     }
                     return nil
                 }
                 
                 group.addTask {
-                    try await Task.sleep(for: .seconds(5))
+                    try await Task.sleep(for: .seconds(2))
                     throw URLError(.timedOut)
                 }
                 
-                let result = try await group.next()!
-                group.cancelAll()
-                return result
+                let result = try await group.next()
+                //group.cancelAll()
+                return result!
             }
         } catch {
+			print("\(error)")
             return nil
         }
     }

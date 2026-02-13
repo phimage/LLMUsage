@@ -9,22 +9,22 @@ public struct WindsurfDiscovery: TokenDiscoverer {
     
     public init() {}
     
-    public func discover() async throws -> DiscoveryResult? {
+    public func discover() async throws -> [DiscoveryResult] {
         let path = (dbPath as NSString).expandingTildeInPath
-        guard FileManager.default.fileExists(atPath: path) else { return nil }
-        
+        guard FileManager.default.fileExists(atPath: path) else { return [] }
+
         guard let apiKey = try? readApiKey(path: path), !apiKey.isEmpty else {
-            return nil
+            return []
         }
-        
+
         let token = TokenInfo(
             accessToken: apiKey,
             refreshToken: nil,
             expiresAt: nil,
             source: .discovered
         )
-        
-        return DiscoveryResult(service: .windsurf, tokens: [token], source: "sqlite")
+
+        return [DiscoveryResult(service: .windsurf, tokens: [token], source: "sqlite")]
     }
     
     private func readApiKey(path: String) throws -> String? {
