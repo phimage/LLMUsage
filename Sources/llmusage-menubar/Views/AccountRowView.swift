@@ -7,7 +7,7 @@ struct AccountRowView: View {
     let account: LLMAccount
 
     private var usageData: UsageData? { viewModel.usageByAccountID[account.id] }
-    private var error: String? { viewModel.errorByAccountID[account.id] }
+    private var errorState: AccountErrorState? { viewModel.errorByAccountID[account.id] }
 
     @State private var isEditingLabel = false
     @State private var tempLabel = ""
@@ -56,11 +56,18 @@ struct AccountRowView: View {
                 .help("Remove account")
             }
 
-            if let error {
-                Text(error)
+            if let errorState {
+                Text(errorState.message)
                     .font(.caption)
                     .foregroundColor(.red)
                     .lineLimit(2)
+                if errorState.canLaunchAntigravity {
+                    Button("Launch Antigravity") {
+                        viewModel.launchAntigravity()
+                    }
+                    .buttonStyle(.borderless)
+                    .font(.caption)
+                }
             } else if let data = usageData {
                 if data.metrics.isEmpty {
                     Text("No usage data")

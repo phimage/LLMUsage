@@ -1,12 +1,18 @@
 import SwiftUI
 import LLMUsage
 import ServiceManagement
+import AppKit
+
+struct AccountErrorState {
+    let message: String
+    let canLaunchAntigravity: Bool
+}
 
 @MainActor
 final class MenuBarViewModel: ObservableObject {
     @Published var accounts: [LLMAccount] = []
     @Published var usageByAccountID: [UUID: UsageData] = [:]
-    @Published var errorByAccountID: [UUID: String] = [:]
+    @Published var errorByAccountID: [UUID: AccountErrorState] = [:]
     @Published var isRefreshing = false
     @Published var isDiscovering = false
     @Published var showAddForm = false
@@ -64,11 +70,58 @@ final class MenuBarViewModel: ObservableObject {
                     usageByAccountID[id] = data
                     errorByAccountID.removeValue(forKey: id)
                 case .failure(let error):
-                    errorByAccountID[id] = String(describing: error).prefix(80).description
+                    if let account = accounts.first(where: { $0.id == id }),
+                       account.service == .antigravity,
+                       isNoTokenError(error) {
+                        errorByAccountID[id] = AccountErrorState(
+                            message: "Antigravity is not running. Launch it, then refresh.",
+                            canLaunchAntigravity: true
+                        )
+                    } else {
+                        errorByAccountID[id] = AccountErrorState(
+                            message: String(describing: error).prefix(80).description,
+                            canLaunchAntigravity: false
+                        )
+                    }
                 }
             }
         }
         lastRefreshed = Date()
+    }
+
+    func launchAntigravity() {
+        let workspace = NSWorkspace.shared
+        let configuration = NSWorkspace.OpenConfiguration()
+
+        let bundleIDs = [
+            "com.google.antigravity",
+            "com.antigravity.desktop",
+            "com.exafunction.antigravity"
+        ]
+
+        for bundleID in bundleIDs {
+            if let appURL = workspace.urlForApplication(withBundleIdentifier: bundleID) {
+                workspace.openApplication(at: appURL, configuration: configuration, completionHandler: nil)
+                return
+            }
+        }
+
+        let defaultPaths = [
+            "/Applications/Antigravity.app",
+            "/Applications/Google Antigravity.app"
+        ]
+        for path in defaultPaths where FileManager.default.fileExists(atPath: path) {
+            workspace.openApplication(
+                at: URL(fileURLWithPath: path),
+                configuration: configuration,
+                completionHandler: nil
+            )
+            return
+        }
+
+        if let url = URL(string: "antigravity://") {
+            workspace.open(url)
+        }
     }
 
     // MARK: - Discovery
@@ -199,5 +252,13 @@ final class MenuBarViewModel: ObservableObject {
         } else {
             try? service.unregister()
         }
+    }
+
+    private func isNoTokenError(_ error: Error) -> Bool {
+        guard let usageError = error as? UsageClientError else { return false }
+        if case .noToken = usageError {
+            return true
+        }
+        return false
     }
 }

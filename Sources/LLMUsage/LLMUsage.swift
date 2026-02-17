@@ -126,6 +126,11 @@ public actor LLMUsage {
         do {
             return try await client.fetchUsage(account: account)
         } catch {
+            if account.service == .claude, isNoTokenError(error) {
+                if let updatedAccount = try await rediscoverAndReplaceClaudeToken(accountID: account.id) {
+                    return try await client.fetchUsage(account: updatedAccount)
+                }
+            }
             if account.service == .antigravity {
                 // Try once to rediscover
                 _ = try? await discoverAndImport(service: .antigravity)
@@ -136,6 +141,37 @@ public actor LLMUsage {
             }
             throw error
         }
+    }
+
+    private func isNoTokenError(_ error: Error) -> Bool {
+        guard let usageError = error as? UsageClientError else { return false }
+        if case .noToken = usageError {
+            return true
+        }
+        return false
+    }
+
+    /// Claude can rotate token values while account identity stays the same.
+    /// Replace only token fields on the existing account, preserving account metadata.
+    private func rediscoverAndReplaceClaudeToken(accountID: UUID) async throws -> LLMAccount? {
+        guard let discoveryResult = await discovery.discover(service: .claude),
+              let discoveredToken = discoveryResult.tokens.first,
+              let idx = accounts.firstIndex(where: { $0.id == accountID }) else {
+            return nil
+        }
+
+        var updated = accounts[idx]
+        if updated.tokens.isEmpty {
+            updated.tokens = [discoveredToken]
+        } else {
+            updated.tokens[0].accessToken = discoveredToken.accessToken
+            updated.tokens[0].refreshToken = discoveredToken.refreshToken
+            updated.tokens[0].expiresAt = discoveredToken.expiresAt
+        }
+        updated.updatedAt = Date()
+        accounts[idx] = updated
+        try await storage.saveAccounts(accounts)
+        return updated
     }
     
     /// Fetch usage for all active accounts

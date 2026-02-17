@@ -8,6 +8,8 @@ public struct CodexDiscovery: TokenDiscoverer {
     private let authFile = "auth.json"
     
     public init() {}
+
+    // MARK: - TokenDiscoverer
     
     public func discover() async throws -> DiscoveryResult? {
         // Check CODEX_HOME first

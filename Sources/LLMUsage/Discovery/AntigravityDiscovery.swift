@@ -18,7 +18,7 @@ public struct AntigravityDiscovery: TokenDiscoverer {
         
         return DiscoveryResult(service: .antigravity, tokens: tokens, source: "process")
     }
-    
+    // MARK: - Private Helpers
     private struct AntigravityProcessInfo {
         let pid: Int
         let csrf: String
